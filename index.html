@@ -228,7 +228,7 @@
   </div>
   <div class="input-wrapper">
     <label for="salaryInput" class="input-label">目标年收入</label>
-    <input id="salaryInput" type="text" placeholder="400,000" />
+    <input id="salaryInput" type="text" value="500,000" />
     <span class="unit-label">美刀</span>
   </div>
     <!-- 速率信息 -->
@@ -315,10 +315,10 @@
 
     /* =============== 按钮交互 =============== */
     startBtn.addEventListener("click", () => {
-      const salary = parseFloat(salaryInput.value.replace(/,/g, ""));
-      if (!salary || salary <= 0) {
-        alert("请输入有效的目标年薪！");
-        return;
+      let salary = parseFloat(salaryInput.value.replace(/,/g, ""));
+      if (!salary || salary <= 0 || isNaN(salary)) {
+        salary = 500000; // 默认值
+        salaryInput.value = salary.toLocaleString("en-US"); // 回填格式化
       }
 
       salaryPerSec = salary / (365 * 24 * 60 * 60);
