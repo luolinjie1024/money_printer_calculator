@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Money Printer Calculator</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ================= 基础样式 ================= */
+    :root {
+      --primary: #00ffa3;
+      --secondary: #6d6dff;
+      --bg1: #141e30;
+      --bg2: #243b55;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Orbitron", sans-serif;
+      background: linear-gradient(-45deg, var(--bg1), var(--bg2));
+      background-size: 400% 400%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      animation: gradientMove 15s ease infinite;
+      overflow: hidden;
+    }
+
+    @keyframes gradientMove {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 10px var(--primary), 0 0 20px var(--secondary);
+    }
+
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .input-label {
+      font-size: 1.25rem;
+      white-space: nowrap;
+    }
+
+    .unit-label {
+      font-size: 1.25rem;
+      white-space: nowrap;
+    }
+
+    input[type="text"] {
+      width: 320px;
+      padding: 0.75rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.25rem;
+      outline: none;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      transition: background 0.3s;
+    }
+
+    input[type="number"]::placeholder {
+      color: #ccc;
+    }
+
+    input[type="number"]:focus {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    #display {
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px var(--primary), 0 0 20px var(--secondary);
+    }
+
+    #displayRMB {
+      font-size: 2rem;
+      margin-top: 0.25rem;
+      font-weight: 600;
+      color: #ffd700;
+      text-shadow: 0 0 10px var(--primary), 0 0 20px var(--secondary);
+    }
+
+    /* ================== Dollar Rain ================== */
+    .dollar {
+      position: absolute;
+      top: -10vh;
+      color: #00ff91;
+      font-size: 24px;
+      opacity: 0.8;
+      animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(-100vh) rotateZ(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(120vh) rotateZ(360deg);
+        opacity: 0;
+      }
+    }
+
+    /* 时钟样式 */
+    .clock {
+      font-size: 1.25rem;
+      letter-spacing: 1px;
+      margin-bottom: 0;
+      text-shadow: 0 0 6px var(--secondary);
+    }
+
+    .time-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* 按钮样式 */
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .action-btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      transition: transform 0.2s, opacity 0.2s;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .action-btn:not(:disabled):active {
+      transform: scale(0.95);
+    }
+
+    /* 结算文字 */
+    .summary {
+      margin-top: 1.5rem;
+      font-size: 1.25rem;
+      text-shadow: 0 0 6px var(--primary);
+      line-height: 2; /* 拉大行距 */
+      text-align: center; /* 居中 */
+    }
+
+    .summary .mono {
+      font-family: 'Courier New', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 速率信息 */
+    .rate-info {
+      margin-top: 1rem;
+      font-size: 1rem;
+      line-height: 1.6;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 新增：当前赚到的钱区域 */
+    .earnings-display {
+      margin-top: 2rem; /* 与上方留白 */
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>💵 Money Printer 搞钱计算器💵</h1>
+  <!-- 实时时钟 -->
+  <div class="time-wrapper">
+    <span class="input-label">当前时间：</span>
+    <div id="clock" class="clock">--:--:--</div>
+  </div>
+
+  <!-- 操作按钮 -->
+  <div class="btn-group">
+    <button id="startBtn" class="action-btn">开始工作</button>
+    <button id="stopBtn" class="action-btn" disabled>下班</button>
+  </div>
+  <div class="input-wrapper">
+    <label for="salaryInput" class="input-label">目标年收入</label>
+    <input id="salaryInput" type="text" placeholder="400,000" />
+    <span class="unit-label">美刀</span>
+  </div>
+    <!-- 速率信息 -->
+    <div id="rateInfo" class="rate-info margin-bottom-60">
+      <div id="rateSec"></div>
+      <div id="rateMin"></div>
+      <div id="rateHour"></div>
+      <div id="rateDay"></div>
+    </div>
+    <div class="earnings-display">
+      <span class="input-label">当前搞到的钱：</span>
+      <span id="display">$0.00</span>
+      <span id="displayRMB">¥0.00</span>
+    </div>
+
+  <!-- 结算总结 -->
+  <div id="summary" class="summary"></div>
+
+
+
+  <!-- GSAP for smooth number animation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <!-- confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script>
+    // ================== 核心逻辑 ==================
+    const salaryInput = document.getElementById("salaryInput");
+    const displayUSD = document.getElementById("display");
+    const displayRMB = document.getElementById("displayRMB");
+    const clockEl = document.getElementById("clock");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const summaryEl = document.getElementById("summary");
+    const rateInfo = document.getElementById("rateInfo");
+    const rateSecEl = document.getElementById("rateSec");
+    const rateMinEl = document.getElementById("rateMin");
+    const rateHourEl = document.getElementById("rateHour");
+    const rateDayEl = document.getElementById("rateDay");
+
+    let salaryPerSec = 0;
+    let timer = null;
+    let startTimestamp = null; // 单次开始时间
+    let accumEarnedUSD = 0;     // 累计收入
+    let accumDurationSec = 0;   // 累计时长
+    let rainTimer = null; // 美元雨定时器
+
+    /* ================= 实时时钟 ================= */
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString("zh-CN", { hour12: false });
+      clockEl.textContent = timeStr;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    function updateEarnings() {
+      const now = Date.now();
+      const elapsedSec = (now - startTimestamp) / 1000;
+      const currentEarned = accumEarnedUSD + elapsedSec * salaryPerSec;
+
+      // 更新文本
+      const formattedUSD = "$" + currentEarned.toLocaleString("en-US", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+      const rmbEarned = currentEarned * 7.2;
+      const formattedRMB = "¥" + rmbEarned.toLocaleString("zh-CN", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+      displayUSD.textContent = formattedUSD;
+      displayRMB.textContent = formattedRMB;
+    }
+
+    function generateDollarRain() {
+      const dollar = document.createElement("div");
+      dollar.classList.add("dollar");
+      dollar.textContent = "$";
+      dollar.style.left = Math.random() * 100 + "vw";
+      dollar.style.fontSize = 16 + Math.random() * 24 + "px";
+      dollar.style.animationDuration = 3 + Math.random() * 5 + "s";
+      document.body.appendChild(dollar);
+
+      // 清理 DOM
+      dollar.addEventListener("animationend", () => {
+        dollar.remove();
+      });
+    }
+
+    /* =============== 按钮交互 =============== */
+    startBtn.addEventListener("click", () => {
+      const salary = parseFloat(salaryInput.value.replace(/,/g, ""));
+      if (!salary || salary <= 0) {
+        alert("请输入有效的目标年薪！");
+        return;
+      }
+
+      salaryPerSec = salary / (365 * 24 * 60 * 60);
+      startTimestamp = Date.now();
+
+      // 更新速率显示
+      updateRateDisplay(salaryPerSec);
+
+      summaryEl.textContent = ""; // 清空总结
+
+      // 若已存在计时器先清除
+      if (timer) clearInterval(timer);
+      updateEarnings(); // 立即更新一次
+      timer = setInterval(updateEarnings, 10); // 10ms 级更新
+
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+
+      // 启动美元雨
+      if (rainTimer) clearInterval(rainTimer);
+      rainTimer = setInterval(generateDollarRain, 500);
+    });
+
+    stopBtn.addEventListener("click", () => {
+      if (!timer) return;
+      clearInterval(timer);
+      timer = null;
+
+      // 停止美元雨
+      if (rainTimer) {
+        clearInterval(rainTimer);
+        rainTimer = null;
+      }
+
+      // 移除场上残留的 dollar 元素
+      document.querySelectorAll('.dollar').forEach(el => el.remove());
+
+      // 计算最终收益
+      const sessionDurationSec = Math.floor((Date.now() - startTimestamp) / 1000);
+      const sessionEarnedUSD = sessionDurationSec * salaryPerSec;
+      const sessionEarnedRMB = sessionEarnedUSD * 7.2;
+
+      // update accumulators
+      accumDurationSec += sessionDurationSec;
+      accumEarnedUSD += sessionEarnedUSD;
+
+      const totalEarnedRMB = accumEarnedUSD * 7.2;
+
+      const elapsedSecTotal = sessionDurationSec;
+      const h = String(Math.floor(elapsedSecTotal / 3600)).padStart(2, "0");
+      const m = String(Math.floor((elapsedSecTotal % 3600) / 60)).padStart(2, "0");
+      const s = String(elapsedSecTotal % 60).padStart(2, "0");
+
+      summaryEl.innerHTML = `
+        <div>工作时长: <span class="mono">${h}:${m}:${s}</span></div>
+        <div>本次工作共赚取： <span class="mono">$${sessionEarnedUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} (≈ ¥${sessionEarnedRMB.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})})</span></div>
+        <div>累计收入: <span class="mono">$${accumEarnedUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} (≈ ¥${totalEarnedRMB.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})})</span></div>`;
+
+      // 撒花庆祝
+      confetti({
+        particleCount: 200,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    });
+
+    /* ============ 输入框格式化 ============ */
+    function formatInput() {
+      let raw = salaryInput.value.replace(/,/g, "").replace(/[^\d.]/g, "");
+      if (raw) {
+        const num = parseFloat(raw);
+        salaryInput.value = num.toLocaleString("en-US");
+        const perSecCalc = num / (365 * 24 * 60 * 60);
+        updateRateDisplay(perSecCalc);
+      } else {
+        salaryInput.value = "";
+        updateRateDisplay(0);
+      }
+    }
+    salaryInput.addEventListener("input", formatInput);
+
+    function updateRateDisplay(perSecUSD) {
+      if (!perSecUSD || perSecUSD <= 0) {
+        rateSecEl.textContent = '';
+        rateMinEl.textContent = '';
+        rateHourEl.textContent = '';
+        rateDayEl.textContent = '';
+        return;
+      }
+
+      const perMinUSD = perSecUSD * 60;
+      const perHourUSD = perMinUSD * 60;
+      const perDayUSD = perHourUSD * 24;
+
+      const perSecRMB = perSecUSD * 7.2;
+      const perMinRMB = perSecRMB * 60;
+      const perHourRMB = perMinRMB * 60;
+      const perDayRMB = perHourRMB * 24;
+
+      const fmtUSD = (v)=>`$${v.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+      const fmtRMB = (v)=>`¥${v.toLocaleString('zh-CN',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+
+      rateSecEl.textContent  = `每秒赚到:   ${fmtUSD(perSecUSD)}  (≈ ${fmtRMB(perSecRMB)})`;
+      rateMinEl.textContent  = `每分钟赚到: ${fmtUSD(perMinUSD)}  (≈ ${fmtRMB(perMinRMB)})`;
+      rateHourEl.textContent = `每小时赚到: ${fmtUSD(perHourUSD)}  (≈ ${fmtRMB(perHourRMB)})`;
+      rateDayEl.textContent  = `每天赚到:   ${fmtUSD(perDayUSD)}  (≈ ${fmtRMB(perDayRMB)})`;
+    }
+
+    updateRateDisplay(0);
+  </script>
+</body>
+</html> 
